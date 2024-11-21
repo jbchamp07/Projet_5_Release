@@ -81,6 +81,7 @@
 			<artifactId>mapstruct-processor</artifactId>
 			<version>1.5.1.Final</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -140,8 +141,12 @@
 							</rules>
 						</configuration>
 					</execution>
-
 				</executions>
+				<configuration>
+					<excludes>
+						<exclude>com/openclassrooms/starterjwt/dto/**</exclude>
+					</excludes>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
