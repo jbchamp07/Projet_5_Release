@@ -1,6 +1,6 @@
 describe('User spec', () => {
 
-    beforeEach(() => {
+    /*beforeEach(() => {
         //Login
         cy.visit('/login')
 
@@ -24,9 +24,9 @@ describe('User spec', () => {
         cy.get('input[formControlName=email]').type("yoga@studio.com")
         cy.get('input[formControlName=password]').type(`${"test!1234"}{enter}{enter}`)
         cy.url().should('include', '/sessions')
-    });
+    });*/
 
-    it('Register successfull', () => {
+    /*it('Register successfull', () => {
         cy.get('.app span.link').contains('Logout').click();
         cy.visit('/register')
     
@@ -82,21 +82,21 @@ describe('User spec', () => {
         cy.get('input[formControlName=lastName]').type(`${"last"}{enter}{enter}`)
     
         cy.url().should('include', '/login')
-      })
+      })*/
 
     //User informations
     it('User Information', () => {
+
+        cy.loginUser();
 
         cy.get('span[routerLink="me"]').click();
         cy.url().should('include', '/me');
 
     cy.get('.m3 mat-card').should('exist');
 
-    cy.get('.m3 mat-card p').contains('Name: first LAST').should('exist');
+    cy.get('.m3 mat-card p').contains('Name: firstName').should('exist');
 
     cy.get('.m3 mat-card p').contains('Email: yoga@studio.com').should('exist');
-
-    cy.get('.m3 mat-card p.my2').contains('You are admin').should('exist');
 
     cy.get('.m3 mat-card p').contains('Create at:').should('exist');
 

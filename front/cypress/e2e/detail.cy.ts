@@ -47,7 +47,7 @@ describe('SessionDetail spec', () => {
     it('GetDetailPage successfull', () => {
 
     // Interception pour le détail de la session
-    cy.intercept('GET', '/api/sessions/1', {
+    cy.intercept('GET', '/api/session/1', {
         body: {
             "id": 1,
             "name": "Session 1",
