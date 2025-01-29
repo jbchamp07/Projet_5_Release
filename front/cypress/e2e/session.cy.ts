@@ -46,16 +46,38 @@ describe('Session spec', () => {
         }).as('getSessions')
 
         cy.get('input[formControlName=email]').type("yoga@studio.com")
-        cy.get('input[formControlName=password]').type(`${"test!1234"}{enter}{enter}`)
+        cy.get('input[formControlName=password]').type("test!1234")
+        cy.get('button[type="submit"]').click();
         cy.url().should('include', '/sessions')
     });
 
     //Create session
     it('Create Session', () => {
 
+        cy.intercept('GET', '/api/teacher', {
+            statusCode: 200,
+            body: [
+                {
+                    "id": 1001,
+                    "lastName": "Dupont",
+                    "firstName": "Jean",
+                    "createdAt": "2023-06-18T10:15:30",
+                    "updatedAt": "2024-06-18T12:30:45"
+                  },
+                  {
+                    "id": 1002,
+                    "lastName": "Martin",
+                    "firstName": "Marie",
+                    "createdAt": "2023-07-20T14:00:00",
+                    "updatedAt": "2024-07-20T15:45:00"
+                  } 
+            ]
+          }).as('getAllTeachers');
+
         cy.get('button[routerLink="create"]').click();
         cy.url().should('include', '/sessions/create');
 
+        
 
         cy.get('input[formControlName=name]').type("Session 1")
         cy.get('input[formControlName=date]').type("2024-06-18")

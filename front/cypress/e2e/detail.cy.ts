@@ -40,14 +40,15 @@ describe('SessionDetail spec', () => {
         }).as('getSessions')
 
         cy.get('input[formControlName=email]').type("yoga@studio.com")
-        cy.get('input[formControlName=password]').type(`${"test!1234"}{enter}{enter}`)
+        cy.get('input[formControlName=password]').type("test!1234")
+        cy.get('button[type="submit"]').click();
         cy.url().should('include', '/sessions')
     });
 
     it('GetDetailPage successfull', () => {
 
     // Interception pour le détail de la session
-    cy.intercept('GET', '/api/sessions/1', {
+    cy.intercept('GET', '/api/session/1', {
         body: {
             "id": 1,
             "name": "Session 1",
