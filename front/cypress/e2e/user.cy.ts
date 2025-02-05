@@ -103,5 +103,72 @@ describe('User spec', () => {
         
     })
 
+    it('User Deleted', () => {
 
+      cy.visit('/login')
+      cy.intercept('POST', '/api/auth/login', {
+        body: {
+          id: 1,
+          username: 'userName',
+          firstName: 'firstName',
+          lastName: 'lastName',
+          admin: false
+        },
+      }).as('loginRequest');
+      const id = '1';
+      cy.intercept('GET', `/api/user/${id}`, {
+        statusCode: 200,
+        body: {
+          id: 1,
+          username: 'userName',
+          firstName: 'firstName',
+          lastName: 'lastName',
+          email: 'yoga@studio.com',
+          admin: false,
+          createdAt: '04/03/2024',
+          updatedAt: '05/03/2024'
+        },
+      }).as('userRetrieved');
+      cy.intercept('GET', '/api/session', {
+        statusCode: 200,
+        body: [
+          {
+            id: 1,
+            name: "Session 1",
+            description: "Yoga could be some cool activity to try 1",
+            date: '06/03/2024',
+            teacher_id: 1,
+            users: [2, 3],
+            createdAt: '06/03/2024',
+            updatedAt: '06/03/2024',
+          },
+          {
+            id: 2,
+            name: "Session 2",
+            description: "Yoga could be some cool activity to try 2",
+            date: '07/03/2024',
+            teacher_id: 1,
+            users: [2, 3],
+            createdAt: '06/03/2024',
+            updatedAt: '06/03/2024',
+          }
+        ],
+      }).as('sessionRetrieved');
+      
+      cy.intercept('DELETE', `/api/user/${id}`, {
+        statusCode: 200,
+        body: {},
+      }).as('deleteUser');
+      
+      cy.get('input[formControlName=email]').type('yoga@studio.com');
+      cy.get('input[formControlName=password]').type("test!1234");
+      cy.get('button[type="submit"]').click();
+
+      cy.get('span[routerLink="me"]').click();
+
+      cy.contains('button', 'Detail').click();
+      cy.wait('@deleteUser');
+      cy.url().should('include', '/');
+
+    })
 });
