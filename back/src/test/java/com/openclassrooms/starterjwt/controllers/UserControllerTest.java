@@ -16,12 +16,17 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
-
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class UserControllerTest {
+    private MockMvc mockMvc;
     @Mock
     private UserService userService;
 
@@ -44,6 +49,7 @@ public class UserControllerTest {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.setContext(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
+        mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
     }
 
     @Test
@@ -130,4 +136,71 @@ public class UserControllerTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
+
+    //Tests mockmvc
+    @Test
+    void testFindById_Success() throws Exception {
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("test@example.com");
+        UserDto userDto = new UserDto();
+
+        when(userService.findById(1L)).thenReturn(user);
+        when(userMapper.toDto(user)).thenReturn(userDto);
+
+        mockMvc.perform(get("/api/user/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testFindById_NotFound() throws Exception {
+        when(userService.findById(1L)).thenReturn(null);
+
+        mockMvc.perform(get("/api/user/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testFindById_BadRequest() throws Exception {
+        mockMvc.perform(get("/api/user/abc"))
+                .andExpect(status().isBadRequest());
+    }
+
+    /*@Test
+    void testDelete_Success() throws Exception {
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("test@example.com");
+
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.getUsername()).thenReturn("test@example.com");
+
+        when(userService.findById(1L)).thenReturn(user);
+
+        mockMvc.perform(delete("/api/user/1"))
+                .andExpect(status().isOk());
+    }*/
+
+    @Test
+    void testDelete_NotFound() throws Exception {
+        when(userService.findById(1L)).thenReturn(null);
+
+        mockMvc.perform(delete("/api/user/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    /*@Test
+    void testDelete_Unauthorized() throws Exception {
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("other@example.com");
+
+        UserDetails userDetails = mock(UserDetails.class);
+        when(userDetails.getUsername()).thenReturn("test@example.com");
+
+        when(userService.findById(1L)).thenReturn(user);
+
+        mockMvc.perform(delete("/api/user/1"))
+                .andExpect(status().isUnauthorized());
+    }*/
 }

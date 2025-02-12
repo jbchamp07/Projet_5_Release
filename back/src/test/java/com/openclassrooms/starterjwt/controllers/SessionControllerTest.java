@@ -8,19 +8,29 @@ import com.openclassrooms.starterjwt.services.SessionService;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import com.openclassrooms.starterjwt.mapper.SessionMapper;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
-//TODO ajouter des tests
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 public class SessionControllerTest {
 
+    private MockMvc mockMvc;
     @Mock
     private SessionService sessionService;
 
@@ -32,6 +42,7 @@ public class SessionControllerTest {
 
     public SessionControllerTest() {
         MockitoAnnotations.initMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(sessionController).build();
     }
 
     @Test
@@ -169,4 +180,81 @@ public class SessionControllerTest {
         ResponseEntity<?> responseEntity = sessionController.noLongerParticipate("1","1");
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     }
+
+    //Tests mockmvc (integration)
+    @Test
+    void testFindById_Success() throws Exception {
+        Session session = new Session();
+        session.setId(1L);
+        SessionDto sessionDto = new SessionDto();
+
+        Mockito.when(sessionService.getById(1L)).thenReturn(session);
+        Mockito.when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/session/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isNotEmpty());
+    }
+
+    @Test
+    void testFindById_NotFoundMVC() throws Exception {
+        Mockito.when(sessionService.getById(anyLong())).thenReturn(null);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/session/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testFindAllMVC() throws Exception {
+        List<Session> sessions = Collections.singletonList(new Session());
+        List<SessionDto> sessionDtos = Collections.singletonList(new SessionDto());
+
+        Mockito.when(sessionService.findAll()).thenReturn(sessions);
+        Mockito.when(sessionMapper.toDto(sessions)).thenReturn(sessionDtos);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/session"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void testCreate() throws Exception {
+        SessionDto sessionDto = new SessionDto();
+        Session session = new Session();
+
+        Mockito.when(sessionMapper.toEntity(any(SessionDto.class))).thenReturn(session);
+        Mockito.when(sessionService.create(any(Session.class))).thenReturn(session);
+        Mockito.when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/session")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Java Basics\",\"date\":\"2024-02-10\",\"teacher_id\":1,\"description\":\"Introduction to Java\"}"))
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    void testUpdate() throws Exception {
+        SessionDto sessionDto = new SessionDto();
+        Session session = new Session();
+
+        Mockito.when(sessionMapper.toEntity(any(SessionDto.class))).thenReturn(session);
+        Mockito.when(sessionService.update(anyLong(), any(Session.class))).thenReturn(session);
+        Mockito.when(sessionMapper.toDto(session)).thenReturn(sessionDto);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/session/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Java Basics\",\"date\":\"2024-02-10\",\"teacher_id\":1,\"description\":\"Introduction to Java\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testDelete() throws Exception {
+        Mockito.when(sessionService.getById(1L)).thenReturn(new Session());
+        Mockito.doNothing().when(sessionService).delete(1L);
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/session/1"))
+                .andExpect(status().isOk());
+    }
+
 }

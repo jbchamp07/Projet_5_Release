@@ -31,7 +31,7 @@ public class SessionTest {
         // Ajoutez d'autres assertions pour tester d'autres propriétés de la session
     }
 
-    //TODO probleme assertfalse
+
     @Test
     public void testEquals() {
         Session session1 = new Session();

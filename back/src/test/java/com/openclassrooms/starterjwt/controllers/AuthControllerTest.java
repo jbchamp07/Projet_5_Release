@@ -18,13 +18,23 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+
+import org.springframework.http.MediaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 
 public class AuthControllerTest {
-
+    private MockMvc mockMvc;
+    private ObjectMapper objectMapper = new ObjectMapper();
     @Mock
     private AuthenticationManager authenticationManager;
 
@@ -43,8 +53,9 @@ public class AuthControllerTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
     }
-    //TODO régler problèmes mocks
+
     /*@Test
     public void testAuthenticateUser() {
         // Arrange
@@ -118,4 +129,41 @@ public class AuthControllerTest {
         assert messageResponse.getMessage().equals("Error: Email is already taken!");
     }
 
+    //Tests MockMVC (integration)
+    @Test
+    void testAuthenticateUser() throws Exception {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("test@example.com");
+        loginRequest.setPassword("password");
+        UserDetailsImpl userDetails = new UserDetailsImpl(1L, "test@example.com", "John", "Doe", false, "password");
+        Authentication authentication = mock(Authentication.class);
+
+        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        when(jwtUtils.generateJwtToken(authentication)).thenReturn("mocked-jwt-token");
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(new User("test@example.com", "Doe", "John", "password", false)));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("mocked-jwt-token"));
+    }
+
+    @Test
+    void testRegisterUserOK() throws Exception {
+        SignupRequest signupRequest = new SignupRequest();
+        signupRequest.setEmail("new@example.com");
+        signupRequest.setPassword("password");
+        signupRequest.setFirstName("John");
+        signupRequest.setLastName("Doe");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("password")).thenReturn("encoded-password");
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signupRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("User registered successfully!"));
+    }
 }

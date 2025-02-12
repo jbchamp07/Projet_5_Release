@@ -1,24 +1,36 @@
 package com.openclassrooms.starterjwt.controllers;
 
 
+import com.openclassrooms.starterjwt.dto.TeacherDto;
 import com.openclassrooms.starterjwt.mapper.TeacherMapper;
 import com.openclassrooms.starterjwt.models.Teacher;
 import com.openclassrooms.starterjwt.services.TeacherService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 public class TeacherControllerTest {
-
+    private MockMvc mockMvc;
+    private Teacher teacher;
+    private TeacherDto teacherDto;
     @Mock
     private TeacherService teacherService;
 
@@ -30,6 +42,7 @@ public class TeacherControllerTest {
 
     public TeacherControllerTest() {
         MockitoAnnotations.initMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(teacherController).build();
     }
 
     @Test
@@ -80,6 +93,63 @@ public class TeacherControllerTest {
         verify(teacherMapper, times(1)).toDto(teachers);
     }
 
-    // Ajoutez d'autres méthodes de test pour les autres méthodes du contrôleur
+    //Tests mockmvc
+    @BeforeEach
+    void setUp() {
+        teacher = new Teacher();
+        teacher.setId(1L);
+        teacher.setFirstName("John");
+        teacher.setLastName("Doe");
+        teacher.setCreatedAt(LocalDateTime.now());
+        teacher.setUpdatedAt(LocalDateTime.now());
+
+        teacherDto = new TeacherDto();
+        teacherDto.setId(1L);
+        teacherDto.setFirstName("John");
+        teacherDto.setLastName("Doe");
+        teacherDto.setCreatedAt(LocalDateTime.now());
+        teacherDto.setUpdatedAt(LocalDateTime.now());
+    }
+
+    @Test
+    void findById_ShouldReturnTeacher_WhenTeacherExists() throws Exception {
+        when(teacherService.findById(1L)).thenReturn(teacher);
+        when(teacherMapper.toDto(teacher)).thenReturn(teacherDto);
+
+        mockMvc.perform(get("/api/teacher/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.lastName").value("Doe"))
+                .andExpect(jsonPath("$.firstName").value("John"));
+    }
+
+    @Test
+    void findById_ShouldReturnNotFound_WhenTeacherDoesNotExist() throws Exception {
+        when(teacherService.findById(1L)).thenReturn(null);
+
+        mockMvc.perform(get("/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void findById_ShouldReturnBadRequest_WhenIdIsInvalid() throws Exception {
+        mockMvc.perform(get("/api/teacher/abc"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void findAll_ShouldReturnListOfTeachers() throws Exception {
+        List<Teacher> teachers = Arrays.asList(teacher);
+        List<TeacherDto> teacherDtos = Arrays.asList(teacherDto);
+
+        when(teacherService.findAll()).thenReturn(teachers);
+        when(teacherMapper.toDto(teachers)).thenReturn(teacherDtos);
+
+        mockMvc.perform(get("/api/teacher"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].lastName").value("Doe"))
+                .andExpect(jsonPath("$[0].firstName").value("John"));
+    }
 
 }
